@@ -10,6 +10,7 @@ import androidx.loader.content.Loader;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.net.URL;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
+    private static final String TAG = "MainActivity";
     private static final int GITHUB_SEARCH_LODER = 22;
     private static final String SEARCHQUERY_URL = "searchUrl";
     private static final String SEARCH_JSON_DATA = "searchJsonData";
@@ -113,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     /**
      * Creating async task loader to fetch data
+     *
      * @param id
      * @param args
      * @return
@@ -122,14 +125,23 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public Loader<String> onCreateLoader(int id, @Nullable final Bundle args) {
         //create a async task laader
         return new AsyncTaskLoader<String>(this) {
+            String mGithubJson;
+
             @Override
             protected void onStartLoading() {
                 if (args == null) {
                     return;
                 }
-                mLoadingIndicator.setVisibility(View.VISIBLE);
-                //tiggers load in background function to load data
-                forceLoad();
+                //checking if we have cache data
+                if (mGithubJson != null) {
+                    deliverResult(mGithubJson);
+                    Log.e(TAG,"caching is happning");
+                } else {
+                    mLoadingIndicator.setVisibility(View.VISIBLE);
+                    //tiggers load in background function to load data
+                    forceLoad();
+                    Log.e(TAG,"starting new loading");
+                }
             }
 
             @Nullable
@@ -148,6 +160,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 }
             }
 
+            @Override
+            public void deliverResult(@Nullable String githubjson) {
+                mGithubJson = githubjson;
+                super.deliverResult(githubjson);
+            }
         };
     }
 
@@ -164,6 +181,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     /**
      * This function is used to reset  the loader
+     *
      * @param loader
      */
     @Override
